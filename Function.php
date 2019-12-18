@@ -45,7 +45,14 @@ function removeDir(string $dir){
 class FileNotFoundException extends Exception{
 }
 
-function copyDir(string $origin, string $to){
+/**
+ * @param string $origin
+ * @param string $to
+ * @param bool   $removeDir
+ * @throws FileNotFoundException
+ * @throws InvalidFileException
+ */
+function copyDir(string $origin, string $to, bool $removeDir = false){
 	
 	if(!file_exists($origin)){
 		return false;
@@ -68,5 +75,26 @@ function copyDir(string $origin, string $to){
 	}
 	
 	foreach(array_diff(scandir($origin), [".", ".."]) as $files){
+		if(file_exists($origin . $files)){
+			$realPath = $origin . $files;
+			
+			if(is_dir($realPath)){
+				mkdir($to . $files);
+				copyDir($realPath);
+			}elseif(is_file($realPath)){
+				copy($realPath, $to);
+			}else{
+				throw new InvalidFileException();
+			}
+		}else{
+			throw new FileNotFoundException();
+		}
 	}
+	
+	if($removeDir){
+		removeDir($origin);
+	}
+}
+
+class InvalidFileException extends Exception{
 }
